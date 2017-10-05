@@ -1,0 +1,16 @@
+package com.oodles.wallettest;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.junit4.SpringRunner;
+
+@RunWith(SpringRunner.class)
+@SpringBootTest
+public class WalletTestApplicationTests {
+
+	@Test
+	public void contextLoads() {
+	}
+
+}
