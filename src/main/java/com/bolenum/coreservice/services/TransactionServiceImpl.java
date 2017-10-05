@@ -3,6 +3,9 @@
  */
 package com.bolenum.coreservice.services;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+
 import javax.annotation.PostConstruct;
 
 import org.slf4j.Logger;
@@ -45,6 +48,9 @@ public class TransactionServiceImpl implements TransactionService {
 		logger.debug("method for transaction event called");
 		web3j.transactionObservable().subscribe(Transaction -> {
 			logger.debug("transaction to address: {}", Transaction.getTo());
+			if (Transaction.getTo() == null || Transaction.getTo().isEmpty()) {
+				return;
+			}
 			User user = userRepository.findByEthWalletaddress(Transaction.getTo());
 			if (user != null) {
 				logger.debug("new Incoming ethereum transaction for user : {}", user.getEmailId());
@@ -54,8 +60,8 @@ public class TransactionServiceImpl implements TransactionService {
 					transaction.setTxHash(Transaction.getHash());
 					transaction.setFromAddress(Transaction.getFrom());
 					transaction.setToAddress(Transaction.getTo());
-					transaction.setGas(Transaction.getGas());
-					transaction.setTxAmount(Transaction.getValue());
+					transaction.setGas(convertWeiToEther(Transaction.getGas()));
+					transaction.setTxAmount(convertWeiToEther(Transaction.getValue()));
 					transaction.setTransactionType(TransactionType.INCOMING);
 					Transaction saved = transactionRepo.saveAndFlush(transaction);
 					if (saved != null) {
@@ -75,5 +81,21 @@ public class TransactionServiceImpl implements TransactionService {
 		web3j.blockObservable(true).subscribe(block -> {
 			logger.debug("block number: {}", block.getBlock().getNumber() + " has just been created");
 		}, Throwable::printStackTrace);
+	}
+	/**
+	 * to convert value from wei to either
+	 * @description convertWeiToEther
+	 * @param 
+	 * @return Double
+	 * @exception 
+	 *
+	 */
+	private Double convertWeiToEther(BigInteger amount){
+		logger.debug("amount in Wei: {}",amount);
+		BigDecimal balance = new BigDecimal(amount);
+		BigDecimal conversionRate = new BigDecimal(new BigInteger("1000000000000000000"));
+		BigDecimal amountInEther = balance.divide(conversionRate);
+		logger.debug("amount in eth: {}", amountInEther.doubleValue());
+		return amountInEther.doubleValue();
 	}
 }
