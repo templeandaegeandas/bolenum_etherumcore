@@ -46,34 +46,40 @@ public class TransactionServiceImpl implements TransactionService {
 	@Override
 	public void saveEthereumIncomingTx() {
 		logger.debug("method for transaction event called");
-		web3j.transactionObservable().subscribe(Transaction -> {
-			logger.debug("transaction to address: {}", Transaction.getTo());
-			if (Transaction.getTo() == null || Transaction.getTo().isEmpty()) {
-				return;
-			}
-			User user = userRepository.findByEthWalletaddress(Transaction.getTo());
-			if (user != null) {
-				logger.debug("new Incoming ethereum transaction for user : {}", user.getEmailId());
-				Transaction tx = transactionRepo.findByTxHash(Transaction.getHash());
-				if (tx == null) {
-					Transaction transaction = new Transaction();
-					transaction.setTxHash(Transaction.getHash());
-					transaction.setFromAddress(Transaction.getFrom());
-					transaction.setToAddress(Transaction.getTo());
-					transaction.setGas(convertWeiToEther(Transaction.getGas()));
-					transaction.setTxAmount(convertWeiToEther(Transaction.getValue()));
-					transaction.setTransactionType(TransactionType.INCOMING);
-					Transaction saved = transactionRepo.saveAndFlush(transaction);
-					if (saved != null) {
-						logger.debug("new incoming transaction saved of user: {}", user.getEmailId());
-					}
-				} else {
-					logger.debug("tx exists: {}", Transaction.getHash());
+		web3j.transactionObservable().subscribe(tx -> {
+			logger.debug("transaction to address: {}", tx.getTo());
+			if (tx.getTo() != null || !tx.getTo().isEmpty()) {
+				User user = userRepository.findByEthWalletaddress(tx.getTo());
+				if (user != null) {
+					logger.debug("new Incoming ethereum transaction for user : {}", user.getEmailId());
+					saveTx(user.getEmailId(), tx);
 				}
 			}
 
 		}, Throwable::printStackTrace);
 
+	}
+
+	private void saveTx(String user, org.web3j.protocol.core.methods.response.Transaction transaction) {
+		Transaction tx = transactionRepo.findByTxHash(transaction.getHash());
+		if (tx == null) {
+			tx = new Transaction();
+			tx.setTxHash(transaction.getHash());
+			tx.setFromAddress(transaction.getFrom());
+			tx.setToAddress(transaction.getTo());
+			tx.setGas(convertWeiToEther(transaction.getGas()));
+			tx.setTxAmount(convertWeiToEther(transaction.getValue()));
+			tx.setTransactionType(TransactionType.INCOMING);
+			Transaction saved = transactionRepo.saveAndFlush(tx);
+			if (saved != null) {
+				logger.debug("new incoming transaction saved of user: {}", user);
+			}
+		} else {
+			logger.debug("tx exists: {}", transaction.getHash());
+			tx.setGas(convertWeiToEther(transaction.getGas()));
+			tx.setGasPrice(convertWeiToEther(transaction.getGasPrice()));
+			transactionRepo.saveAndFlush(tx);
+		}
 	}
 
 	@Override
@@ -82,16 +88,14 @@ public class TransactionServiceImpl implements TransactionService {
 			logger.debug("block number: {}", block.getBlock().getNumber() + " has just been created");
 		}, Throwable::printStackTrace);
 	}
+
 	/**
-	 * to convert value from wei to either
-	 * @description convertWeiToEther
-	 * @param 
-	 * @return Double
-	 * @exception 
-	 *
+	 * @description to convert value from wei to either 
+	 * @param amount in wei
+	 * @return either
 	 */
-	private Double convertWeiToEther(BigInteger amount){
-		logger.debug("amount in Wei: {}",amount);
+	private Double convertWeiToEther(BigInteger amount) {
+		logger.debug("amount in Wei: {}", amount);
 		BigDecimal balance = new BigDecimal(amount);
 		BigDecimal conversionRate = new BigDecimal(new BigInteger("1000000000000000000"));
 		BigDecimal amountInEther = balance.divide(conversionRate);
