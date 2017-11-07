@@ -7,13 +7,17 @@ import java.util.Date;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.ManyToOne;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import com.bolenum.coreservice.enums.TransactionStatus;
 import com.bolenum.coreservice.enums.TransactionType;
 
 /**
@@ -41,9 +45,27 @@ public class Transaction {
 	private Double txFee;
 	private Double txAmount;
 	private String txDescription;
+	
+	@Enumerated(EnumType.STRING)
 	private TransactionType transactionType;
+	
+	@Enumerated(EnumType.STRING)
+	private TransactionStatus transactionStatus;
 	private Double gas;
 	private Double gasPrice;
+	
+	@ManyToOne
+	private User user;
+	
+	private String currenctType;
+
+	public User getUser() {
+		return user;
+	}
+
+	public void setUser(User user) {
+		this.user = user;
+	}
 
 	public Transaction() {
 
@@ -245,6 +267,22 @@ public class Transaction {
 	 */
 	public void setGasPrice(Double gasPrice) {
 		this.gasPrice = gasPrice;
+	}
+
+	public TransactionStatus getTransactionStatus() {
+		return transactionStatus;
+	}
+
+	public void setTransactionStatus(TransactionStatus transactionStatus) {
+		this.transactionStatus = transactionStatus;
+	}
+
+	public String getCurrenctType() {
+		return currenctType;
+	}
+
+	public void setCurrenctType(String currenctType) {
+		this.currenctType = currenctType;
 	}
 
 }

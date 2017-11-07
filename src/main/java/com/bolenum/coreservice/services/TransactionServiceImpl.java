@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.http.HttpService;
 
+import com.bolenum.coreservice.enums.TransactionStatus;
 import com.bolenum.coreservice.enums.TransactionType;
 import com.bolenum.coreservice.model.Transaction;
 import com.bolenum.coreservice.model.User;
@@ -40,7 +41,7 @@ public class TransactionServiceImpl implements TransactionService {
 
 	@PostConstruct
 	void init() {
-		web3j = Web3j.build(new HttpService("http://127.0.0.1:8000"));
+		web3j = Web3j.build(new HttpService("http://165.227.86.165:8000"));
 	}
 
 	@Override
@@ -52,7 +53,7 @@ public class TransactionServiceImpl implements TransactionService {
 				User user = userRepository.findByEthWalletaddress(tx.getTo());
 				if (user != null) {
 					logger.debug("new Incoming ethereum transaction for user : {}", user.getEmailId());
-					saveTx(user.getEmailId(), tx);
+					saveTx(user, tx);
 				}
 			}
 
@@ -60,7 +61,7 @@ public class TransactionServiceImpl implements TransactionService {
 
 	}
 
-	private void saveTx(String user, org.web3j.protocol.core.methods.response.Transaction transaction) {
+	private void saveTx(User user, org.web3j.protocol.core.methods.response.Transaction transaction) {
 		Transaction tx = transactionRepo.findByTxHash(transaction.getHash());
 		if (tx == null) {
 			tx = new Transaction();
@@ -70,11 +71,16 @@ public class TransactionServiceImpl implements TransactionService {
 			tx.setGas(convertWeiToEther(transaction.getGas()));
 			tx.setTxAmount(convertWeiToEther(transaction.getValue()));
 			tx.setTransactionType(TransactionType.INCOMING);
+			tx.setTransactionStatus(TransactionStatus.DEPOSIT);
+			tx.setUser(user);
 			Transaction saved = transactionRepo.saveAndFlush(tx);
 			if (saved != null) {
-				logger.debug("new incoming transaction saved of user: {}", user);
+				logger.debug("new incoming transaction saved of user: {}", user.getEmailId());
 			}
 		} else {
+			if (tx.getTransactionStatus().equals(TransactionStatus.WITHDRAW)) {
+				tx.setTransactionType(TransactionType.INCOMING);
+			}
 			logger.debug("tx exists: {}", transaction.getHash());
 			tx.setGas(convertWeiToEther(transaction.getGas()));
 			tx.setGasPrice(convertWeiToEther(transaction.getGasPrice()));
@@ -90,8 +96,9 @@ public class TransactionServiceImpl implements TransactionService {
 	}
 
 	/**
-	 * @description to convert value from wei to either 
-	 * @param amount in wei
+	 * @description to convert value from wei to either
+	 * @param amount
+	 *            in wei
 	 * @return either
 	 */
 	private Double convertWeiToEther(BigInteger amount) {
