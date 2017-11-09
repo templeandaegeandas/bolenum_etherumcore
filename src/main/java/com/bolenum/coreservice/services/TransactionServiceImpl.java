@@ -5,7 +5,6 @@ package com.bolenum.coreservice.services;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-
 import javax.annotation.PostConstruct;
 
 import org.slf4j.Logger;
@@ -15,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.http.HttpService;
 
+import com.bolenum.coreservice.enums.CurrencyName;
 import com.bolenum.coreservice.enums.TransactionStatus;
 import com.bolenum.coreservice.enums.TransactionType;
 import com.bolenum.coreservice.model.Transaction;
@@ -48,8 +48,9 @@ public class TransactionServiceImpl implements TransactionService {
 	public void saveEthereumIncomingTx() {
 		logger.debug("method for transaction event called");
 		web3j.transactionObservable().subscribe(tx -> {
-			logger.debug("transaction to address: {}", tx.getTo());
-			if (tx.getTo() != null || !tx.getTo().isEmpty()) {
+		
+			if (tx.getTo() != null) {
+				logger.debug("tx.getTo() {}",tx.getTo());
 				User user = userRepository.findByEthWalletaddress(tx.getTo());
 				if (user != null) {
 					logger.debug("new Incoming ethereum transaction for user : {}", user.getEmailId());
@@ -72,6 +73,7 @@ public class TransactionServiceImpl implements TransactionService {
 			tx.setTxAmount(convertWeiToEther(transaction.getValue()));
 			tx.setTransactionType(TransactionType.INCOMING);
 			tx.setTransactionStatus(TransactionStatus.DEPOSIT);
+			tx.setCurrencyName(CurrencyName.ETHEREUM);
 			tx.setUser(user);
 			Transaction saved = transactionRepo.saveAndFlush(tx);
 			if (saved != null) {
