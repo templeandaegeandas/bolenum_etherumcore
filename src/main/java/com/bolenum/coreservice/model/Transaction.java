@@ -17,7 +17,6 @@ import javax.persistence.ManyToOne;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import com.bolenum.coreservice.enums.CurrencyName;
 import com.bolenum.coreservice.enums.TransactionStatus;
 import com.bolenum.coreservice.enums.TransactionType;
 
@@ -46,38 +45,24 @@ public class Transaction {
 	private Double txFee;
 	private Double txAmount;
 	private String txDescription;
-	
+
 	@Enumerated(EnumType.STRING)
 	private TransactionType transactionType;
-	
+
 	@Enumerated(EnumType.STRING)
 	private TransactionStatus transactionStatus;
 	private Double gas;
 	private Double gasPrice;
-	
-	@Enumerated(EnumType.STRING)
-	private CurrencyName currencyName;
-	
-	@ManyToOne
-	private User user;
-	
-	public CurrencyName getCurrencyName() {
-		return currencyName;
-	}
 
-	public void setCurrencyName(CurrencyName currencyName) {
-		this.currencyName = currencyName;
-	}
+	private String currencyName;
+
+	@ManyToOne
+	private User fromUser;
+
+	@ManyToOne
+	private User toUser;
 
 	private String currenctType;
-
-	public User getUser() {
-		return user;
-	}
-
-	public void setUser(User user) {
-		this.user = user;
-	}
 
 	public Transaction() {
 
@@ -297,4 +282,27 @@ public class Transaction {
 		this.currenctType = currenctType;
 	}
 
+	public User getFromUser() {
+		return fromUser;
+	}
+
+	public void setFromUser(User fromUser) {
+		this.fromUser = fromUser;
+	}
+
+	public User getToUser() {
+		return toUser;
+	}
+
+	public void setToUser(User toUser) {
+		this.toUser = toUser;
+	}
+
+	public String getCurrencyName() {
+		return currencyName;
+	}
+
+	public void setCurrencyName(String currencyName) {
+		this.currencyName = currencyName;
+	}
 }

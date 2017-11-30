@@ -5,6 +5,7 @@ package com.bolenum.coreservice.services;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+
 import javax.annotation.PostConstruct;
 
 import org.slf4j.Logger;
@@ -14,7 +15,6 @@ import org.springframework.stereotype.Service;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.http.HttpService;
 
-import com.bolenum.coreservice.enums.CurrencyName;
 import com.bolenum.coreservice.enums.TransactionStatus;
 import com.bolenum.coreservice.enums.TransactionType;
 import com.bolenum.coreservice.model.Transaction;
@@ -48,13 +48,13 @@ public class TransactionServiceImpl implements TransactionService {
 	public void saveEthereumIncomingTx() {
 		logger.debug("method for transaction event called");
 		web3j.transactionObservable().subscribe(tx -> {
-		
-			if (tx.getTo() != null) {
-				logger.debug("tx.getTo() {}",tx.getTo());
-				User user = userRepository.findByEthWalletaddress(tx.getTo());
-				if (user != null) {
-					logger.debug("new Incoming ethereum transaction for user : {}", user.getEmailId());
-					saveTx(user, tx);
+			logger.debug("transaction to address: {}", tx.getTo());
+			if (tx.getTo() != null || tx.getTo() != "null") {
+				User toUser = userRepository.findByEthWalletaddress(tx.getTo());
+				User fromUser = userRepository.findByEthWalletaddress(tx.getFrom());
+				if (toUser != null) {
+					logger.debug("new Incoming ethereum transaction for user : {}", toUser.getEmailId());
+					saveTx(toUser, fromUser, tx);
 				}
 			}
 
@@ -62,10 +62,12 @@ public class TransactionServiceImpl implements TransactionService {
 
 	}
 
-	private void saveTx(User user, org.web3j.protocol.core.methods.response.Transaction transaction) {
+	private void saveTx(User toUser, User fromUser, org.web3j.protocol.core.methods.response.Transaction transaction) {
 		Transaction tx = transactionRepo.findByTxHash(transaction.getHash());
 		if (tx == null) {
 			tx = new Transaction();
+			BigInteger feeInWei = transaction.getGas().multiply(transaction.getGasPrice());
+			tx.setTxFee(convertWeiToEther(feeInWei));
 			tx.setTxHash(transaction.getHash());
 			tx.setFromAddress(transaction.getFrom());
 			tx.setToAddress(transaction.getTo());
@@ -73,11 +75,12 @@ public class TransactionServiceImpl implements TransactionService {
 			tx.setTxAmount(convertWeiToEther(transaction.getValue()));
 			tx.setTransactionType(TransactionType.INCOMING);
 			tx.setTransactionStatus(TransactionStatus.DEPOSIT);
-			tx.setCurrencyName(CurrencyName.ETHEREUM);
-			tx.setUser(user);
+			tx.setCurrencyName("ETH");
+			tx.setFromUser(fromUser);
+			tx.setToUser(toUser);
 			Transaction saved = transactionRepo.saveAndFlush(tx);
 			if (saved != null) {
-				logger.debug("new incoming transaction saved of user: {}", user.getEmailId());
+				logger.debug("new incoming transaction saved of user: {}", toUser.getEmailId());
 			}
 		} else {
 			if (tx.getTransactionStatus().equals(TransactionStatus.WITHDRAW)) {
