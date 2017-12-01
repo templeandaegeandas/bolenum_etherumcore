@@ -64,14 +64,15 @@ public class TransactionServiceImpl implements TransactionService {
 
 	private void saveTx(User toUser, User fromUser, org.web3j.protocol.core.methods.response.Transaction transaction) {
 		Transaction tx = transactionRepo.findByTxHash(transaction.getHash());
+		BigInteger feeInWei = transaction.getGas().multiply(transaction.getGasPrice());
 		if (tx == null) {
 			tx = new Transaction();
-			BigInteger feeInWei = transaction.getGas().multiply(transaction.getGasPrice());
 			tx.setTxFee(convertWeiToEther(feeInWei));
 			tx.setTxHash(transaction.getHash());
 			tx.setFromAddress(transaction.getFrom());
 			tx.setToAddress(transaction.getTo());
 			tx.setGas(convertWeiToEther(transaction.getGas()));
+			tx.setGasPrice(convertWeiToEther(transaction.getGasPrice()));
 			tx.setTxAmount(convertWeiToEther(transaction.getValue()));
 			tx.setTransactionType(TransactionType.INCOMING);
 			tx.setTransactionStatus(TransactionStatus.DEPOSIT);
@@ -89,6 +90,7 @@ public class TransactionServiceImpl implements TransactionService {
 			logger.debug("tx exists: {}", transaction.getHash());
 			tx.setGas(convertWeiToEther(transaction.getGas()));
 			tx.setGasPrice(convertWeiToEther(transaction.getGasPrice()));
+			tx.setTxFee(convertWeiToEther(feeInWei));
 			transactionRepo.saveAndFlush(tx);
 		}
 	}
