@@ -49,7 +49,7 @@ public class TransactionServiceImpl implements TransactionService {
 		logger.debug("method for transaction event called");
 		web3j.transactionObservable().subscribe(tx -> {
 			logger.debug("transaction to address: {}", tx.getTo());
-			if (tx.getTo() != null || tx.getTo() != "null") {
+			if (tx.getTo() != null) {
 				User toUser = userRepository.findByEthWalletaddress(tx.getTo());
 				User fromUser = userRepository.findByEthWalletaddress(tx.getFrom());
 				if (toUser != null) {
@@ -58,7 +58,10 @@ public class TransactionServiceImpl implements TransactionService {
 				}
 			}
 
-		}, Throwable::printStackTrace);
+		}, error -> {
+			logger.error("error in transaction listen: {}", error.getMessage());
+			error.printStackTrace();
+		});
 
 	}
 
@@ -99,7 +102,9 @@ public class TransactionServiceImpl implements TransactionService {
 	public void getBlockNumber() {
 		web3j.blockObservable(true).subscribe(block -> {
 			logger.debug("block number: {}", block.getBlock().getNumber() + " has just been created");
-		}, Throwable::printStackTrace);
+		}, error -> {
+			logger.error("error in block number listen: {}", error.getMessage());
+		});
 	}
 
 	/**
