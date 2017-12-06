@@ -11,6 +11,7 @@ import javax.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.http.HttpService;
@@ -39,16 +40,19 @@ public class TransactionServiceImpl implements TransactionService {
 
 	private Web3j web3j;
 
+	@Value("${service.url}")
+	private String url;
+
 	@PostConstruct
 	void init() {
-		web3j = Web3j.build(new HttpService("http://165.227.86.165:8000"));
+		web3j = Web3j.build(new HttpService(url));
 	}
 
 	@Override
 	public void saveEthereumIncomingTx() {
 		logger.debug("method for transaction event called");
 		web3j.transactionObservable().subscribe(tx -> {
-			logger.debug("transaction to address: {}", tx.getTo());
+			logger.debug("transaction to address: {} and condition: {}", tx.getTo(), tx.getTo() != null);
 			if (tx.getTo() != null) {
 				User toUser = userRepository.findByEthWalletaddress(tx.getTo());
 				User fromUser = userRepository.findByEthWalletaddress(tx.getFrom());
