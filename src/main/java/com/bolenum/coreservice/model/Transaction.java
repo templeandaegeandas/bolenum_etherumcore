@@ -19,6 +19,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import com.bolenum.coreservice.enums.TransactionStatus;
 import com.bolenum.coreservice.enums.TransactionType;
+import com.bolenum.coreservice.enums.TransferStatus;
 
 /**
  * @author chandan kumar singh
@@ -63,6 +64,42 @@ public class Transaction {
 	private User toUser;
 
 	private String currenctType;
+
+	private Long tradeId;
+	
+	/**
+	 * for checking transfer status(amount transfered to admin or not)
+	 */
+	@Enumerated(EnumType.STRING)
+	private TransferStatus transferStatus;
+
+	public Long getTradeId() {
+		return tradeId;
+	}
+
+	public void setTradeId(Long tradeId) {
+		this.tradeId = tradeId;
+	}
+
+	public boolean isInAppTransaction() {
+		return inAppTransaction;
+	}
+
+	public void setInAppTransaction(boolean inAppTransaction) {
+		this.inAppTransaction = inAppTransaction;
+	}
+
+	public TransferStatus getTransferStatus() {
+		return transferStatus;
+	}
+
+	public void setTransferStatus(TransferStatus transferStatus) {
+		this.transferStatus = transferStatus;
+	}
+
+	private boolean inAppTransaction = false;
+
+	
 
 	public Transaction() {
 

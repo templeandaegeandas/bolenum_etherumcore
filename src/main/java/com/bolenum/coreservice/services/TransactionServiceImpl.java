@@ -18,6 +18,7 @@ import org.web3j.protocol.http.HttpService;
 
 import com.bolenum.coreservice.enums.TransactionStatus;
 import com.bolenum.coreservice.enums.TransactionType;
+import com.bolenum.coreservice.enums.TransferStatus;
 import com.bolenum.coreservice.model.Transaction;
 import com.bolenum.coreservice.model.User;
 import com.bolenum.coreservice.repo.TransactionRepo;
@@ -48,6 +49,9 @@ public class TransactionServiceImpl implements TransactionService {
 		web3j = Web3j.build(new HttpService(url));
 	}
 
+	/**
+	 *  
+	 */
 	@Override
 	public void saveEthereumIncomingTx() {
 		logger.debug("method for transaction event called");
@@ -83,6 +87,7 @@ public class TransactionServiceImpl implements TransactionService {
 			tx.setTxAmount(convertWeiToEther(transaction.getValue()));
 			tx.setTransactionType(TransactionType.INCOMING);
 			tx.setTransactionStatus(TransactionStatus.DEPOSIT);
+            tx.setTransferStatus(TransferStatus.INITIATED);
 			tx.setCurrencyName("ETH");
 			tx.setFromUser(fromUser);
 			tx.setToUser(toUser);
@@ -90,15 +95,6 @@ public class TransactionServiceImpl implements TransactionService {
 			if (saved != null) {
 				logger.debug("new incoming transaction saved of user: {}", toUser.getEmailId());
 			}
-		} else {
-			if (tx.getTransactionStatus().equals(TransactionStatus.WITHDRAW)) {
-				tx.setTransactionType(TransactionType.INCOMING);
-			}
-			logger.debug("tx exists: {}", transaction.getHash());
-			tx.setGas(convertWeiToEther(transaction.getGas()));
-			tx.setGasPrice(convertWeiToEther(transaction.getGasPrice()));
-			tx.setTxFee(convertWeiToEther(feeInWei));
-			transactionRepo.saveAndFlush(tx);
 		}
 	}
 
