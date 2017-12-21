@@ -21,8 +21,9 @@ import com.bolenum.coreservice.enums.TransactionType;
 import com.bolenum.coreservice.enums.TransferStatus;
 import com.bolenum.coreservice.model.Transaction;
 import com.bolenum.coreservice.model.User;
+import com.bolenum.coreservice.model.UserCoin;
 import com.bolenum.coreservice.repo.TransactionRepo;
-import com.bolenum.coreservice.repo.UserRepository;
+import com.bolenum.coreservice.repo.UserCoinRepository;
 
 /**
  * @author chandan kumar singh
@@ -34,7 +35,7 @@ public class TransactionServiceImpl implements TransactionService {
 	private Logger logger = LoggerFactory.getLogger(TransactionServiceImpl.class);
 
 	@Autowired
-	private UserRepository userRepository;
+	private UserCoinRepository userCoinRepository;
 
 	@Autowired
 	private TransactionRepo transactionRepo;
@@ -58,22 +59,19 @@ public class TransactionServiceImpl implements TransactionService {
 		web3j.transactionObservable().subscribe(tx -> {
 			logger.debug("transaction to address: {} and condition: {}", tx.getTo(), tx.getTo() != null);
 			if (tx.getTo() != null) {
-				User toUser = userRepository.findByEthWalletaddress(tx.getTo());
-				User fromUser = userRepository.findByEthWalletaddress(tx.getFrom());
-				if (toUser != null) {
-					logger.debug("new Incoming ethereum transaction for user : {}", toUser.getEmailId());
-					saveTx(toUser, fromUser, tx);
+				UserCoin userCoin = userCoinRepository.findByWalletAddress(tx.getTo());
+				if (userCoin != null) {
+					logger.debug("new Incoming ethereum transaction for user : {}", userCoin.getUser().getEmailId());
+					saveTx(userCoin.getUser(), tx);
 				}
 			}
-
 		}, error -> {
 			logger.error("error in transaction listen: {}", error.getMessage());
 			error.printStackTrace();
 		});
-
 	}
 
-	private void saveTx(User toUser, User fromUser, org.web3j.protocol.core.methods.response.Transaction transaction) {
+	private void saveTx(User toUser, org.web3j.protocol.core.methods.response.Transaction transaction) {
 		Transaction tx = transactionRepo.findByTxHash(transaction.getHash());
 		BigInteger feeInWei = transaction.getGas().multiply(transaction.getGasPrice());
 		if (tx == null) {
@@ -87,9 +85,11 @@ public class TransactionServiceImpl implements TransactionService {
 			tx.setTxAmount(convertWeiToEther(transaction.getValue()));
 			tx.setTransactionType(TransactionType.INCOMING);
 			tx.setTransactionStatus(TransactionStatus.DEPOSIT);
-            tx.setTransferStatus(TransferStatus.INITIATED);
+			tx.setTransferStatus(TransferStatus.INITIATED);
+			if (toUser.getUserId() == 1) {
+				tx.setTransferStatus(TransferStatus.COMPLETED);
+			}
 			tx.setCurrencyName("ETH");
-			tx.setFromUser(fromUser);
 			tx.setToUser(toUser);
 			Transaction saved = transactionRepo.saveAndFlush(tx);
 			if (saved != null) {
