@@ -66,12 +66,16 @@ public class Transaction {
 	private String currenctType;
 
 	private Long tradeId;
-	
+
 	/**
 	 * for checking transfer status(amount transfered to admin or not)
 	 */
 	@Enumerated(EnumType.STRING)
 	private TransferStatus transferStatus;
+
+	private boolean inAppTransaction = false;
+
+	private String transferFeeCurrency;
 
 	public Long getTradeId() {
 		return tradeId;
@@ -96,10 +100,6 @@ public class Transaction {
 	public void setTransferStatus(TransferStatus transferStatus) {
 		this.transferStatus = transferStatus;
 	}
-
-	private boolean inAppTransaction = false;
-
-	
 
 	public Transaction() {
 

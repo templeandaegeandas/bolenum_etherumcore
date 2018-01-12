@@ -95,6 +95,8 @@ public class TransactionServiceImpl implements TransactionService {
 			if (saved != null) {
 				logger.debug("new incoming transaction saved of user: {}", toUser.getEmailId());
 			}
+		}else {
+			logger.debug("tx exist of hash: {}", transaction.getHash());
 		}
 	}
 
