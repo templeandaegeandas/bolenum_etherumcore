@@ -72,6 +72,8 @@ public class Transaction {
 	 */
 	@Enumerated(EnumType.STRING)
 	private TransferStatus transferStatus;
+	
+	private boolean isFetchError=false;
 
 	public Long getTradeId() {
 		return tradeId;
@@ -309,6 +311,20 @@ public class Transaction {
 
 	public void setTransactionStatus(TransactionStatus transactionStatus) {
 		this.transactionStatus = transactionStatus;
+	}
+
+	/**
+	 * @return the isFetchError
+	 */
+	public boolean isFetchError() {
+		return isFetchError;
+	}
+
+	/**
+	 * @param isFetchError the isFetchError to set
+	 */
+	public void setFetchError(boolean isFetchError) {
+		this.isFetchError = isFetchError;
 	}
 
 	public String getCurrenctType() {
