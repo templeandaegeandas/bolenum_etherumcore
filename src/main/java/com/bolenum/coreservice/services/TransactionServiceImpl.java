@@ -66,8 +66,8 @@ public class TransactionServiceImpl implements TransactionService {
 				}
 			}
 		}, error -> {
-			logger.error("error in transaction listen: {}", error.getMessage());
-			error.printStackTrace();
+			logger.error("error in transaction listen: {}", error);
+			saveEthereumIncomingTx();
 		});
 	}
 
@@ -86,7 +86,7 @@ public class TransactionServiceImpl implements TransactionService {
 			tx.setTransactionType(TransactionType.INCOMING);
 			tx.setTransactionStatus(TransactionStatus.DEPOSIT);
 			tx.setTransferStatus(TransferStatus.INITIATED);
-			if (toUser.getUserId() == 1) {
+			if ("admin@bolenum.com".equalsIgnoreCase(toUser.getEmailId())) {
 				tx.setTransferStatus(TransferStatus.COMPLETED);
 			}
 			tx.setCurrencyName("ETH");
@@ -95,16 +95,16 @@ public class TransactionServiceImpl implements TransactionService {
 			if (saved != null) {
 				logger.debug("new incoming transaction saved of user: {}", toUser.getEmailId());
 			}
+		}else {
+			logger.debug("tx exist of hash: {}", transaction.getHash());
 		}
 	}
 
 	@Override
 	public void getBlockNumber() {
-		web3j.blockObservable(true).subscribe(block -> {
-			logger.debug("block number: {}", block.getBlock().getNumber() + " has just been created");
-		}, error -> {
-			logger.error("error in block number listen: {}", error.getMessage());
-		});
+		web3j.blockObservable(true).subscribe(
+				block -> logger.debug("block number: {}", block.getBlock().getNumber() + " has just been created"),
+				error -> logger.error("error in block number listen: {}", error));
 	}
 
 	/**
