@@ -358,4 +358,13 @@ public class Transaction {
 	public void setCurrencyName(String currencyName) {
 		this.currencyName = currencyName;
 	}
+
+	public String getTransferFeeCurrency() {
+		return transferFeeCurrency;
+	}
+
+	public void setTransferFeeCurrency(String transferFeeCurrency) {
+		this.transferFeeCurrency = transferFeeCurrency;
+	}
+	
 }
