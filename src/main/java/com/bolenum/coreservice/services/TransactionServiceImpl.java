@@ -89,13 +89,19 @@ public class TransactionServiceImpl implements TransactionService {
 			if ("admin@bolenum.com".equalsIgnoreCase(toUser.getEmailId())) {
 				tx.setTransferStatus(TransferStatus.COMPLETED);
 			}
+			if (transaction.getFrom() != null) {
+				UserCoin userCoin = userCoinRepository.findByWalletAddress(transaction.getFrom());
+				if (userCoin != null) {
+					tx.setFromUser(userCoin.getUser());
+				}
+			}
 			tx.setCurrencyName("ETH");
 			tx.setToUser(toUser);
 			Transaction saved = transactionRepo.saveAndFlush(tx);
 			if (saved != null) {
 				logger.debug("new incoming transaction saved of user: {}", toUser.getEmailId());
 			}
-		}else {
+		} else {
 			logger.debug("tx exist of hash: {}", transaction.getHash());
 		}
 	}
